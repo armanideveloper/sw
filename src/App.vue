@@ -90,8 +90,8 @@ export default {
     },
 
     chooseWinner(prop) {
-      this.leftPerson.winner = false;
-      this.rightPerson.winner = false;
+      this.$set(this.leftPerson, "winner", false);
+      this.$set(this.rightPerson, "winner", false);
 
       const propLeft = parseInt(this.leftPerson[prop]) || 0;
       const propRight = parseInt(this.rightPerson[prop]) || 0;
