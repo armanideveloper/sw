@@ -3,16 +3,16 @@
     <loading :active.sync="isLoading" :can-cancel="true" />
     <b-container>
       <b-row>
-        <b-col cols="1" class="mb-4" @click="setData">
-          <b-button variant="success">Play</b-button>
+        <b-col cols="1" class="mb-4">
+          <b-button variant="success" @click="setData">Play</b-button>
         </b-col>
       </b-row>
       <b-row v-if="this.ready">
         <b-col>
-          <Person :person="leftPerson" />
+          <Person :person="leftPerson" :score="leftScore" />
         </b-col>
         <b-col>
-          <Person :person="rightPerson" />
+          <Person :person="rightPerson" :score="rightScore" />
         </b-col>
       </b-row>
     </b-container>
@@ -39,7 +39,9 @@ export default {
       leftPerson: {},
       rightPerson: {},
       isLoading: false,
-      ready: false
+      ready: false,
+      leftScore: 0,
+      rightScore: 0
     };
   },
 
@@ -58,7 +60,7 @@ export default {
             this.leftPerson = people[0];
             this.rightPerson = people[1];
             this.ready = true;
-            this.chooseWinner('height')
+            this.chooseWinner("height");
           })
           .finally(() => (this.isLoading = false));
       });
@@ -81,10 +83,12 @@ export default {
 
       if (propLeft > propRight) {
         this.leftPerson.winner = true;
+        this.leftScore++;
       }
 
       if (propRight > propLeft) {
         this.rightPerson.winner = true;
+        this.rightScore++;
       }
     }
   },
