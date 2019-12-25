@@ -1,7 +1,13 @@
 <template>
   <div id="app">
+    <loading :active.sync="isLoading" :can-cancel="true" />
     <b-container>
       <b-row>
+        <b-col cols="1" class="mb-4" @click="setData">
+          <b-button variant="success">Play</b-button>
+        </b-col>
+      </b-row>
+      <b-row v-if="this.ready">
         <b-col>
           <Person :person="leftPerson" />
         </b-col>
@@ -14,13 +20,16 @@
 </template>
 
 <script>
-import Person from './components/Person.vue'
+import Person from "./components/Person.vue";
+import Loading from "vue-loading-overlay";
+import "vue-loading-overlay/dist/vue-loading.css";
 
 export default {
   name: "app",
 
   components: {
-    Person
+    Person,
+    Loading
   },
 
   data() {
@@ -28,27 +37,30 @@ export default {
       peopleCount: 1,
       people: [],
       leftPerson: {},
-      rightPerson: {}
+      rightPerson: {},
+      isLoading: false,
+      ready: false
     };
-  },
-
-  mounted() {
-    this.setData();
   },
 
   methods: {
     setData() {
+      this.isLoading = true;
       this.$swapi.getPeople(data => {
         this.peopleCount = data.count;
         this.people = data.results;
-        this.setPerson('leftPerson');
-        this.setPerson('rightPerson');
-      });
-    },
 
-    setPerson(pos) {
-      this.getRandomPerson().then(p => {
-        this[pos] = p;
+        const leftPromise = this.getRandomPerson();
+        const rightPromise = this.getRandomPerson();
+
+        Promise.all([leftPromise, rightPromise])
+          .then(people => {
+            this.leftPerson = people[0];
+            this.rightPerson = people[1];
+            this.ready = true;
+            this.chooseWinner('height')
+          })
+          .finally(() => (this.isLoading = false));
       });
     },
 
@@ -56,17 +68,30 @@ export default {
       return new Promise(resolve => {
         const page = Math.floor(Math.random() * this.peoplePageCount) + 1;
 
-        this.$swapi.getPeople({page}, data => {
+        this.$swapi.getPeople({ page }, data => {
           const people = data.results;
-          resolve(people[Math.floor(Math.random() * people.length)])
+          resolve(people[Math.floor(Math.random() * people.length)]);
         });
       });
+    },
+
+    chooseWinner(prop) {
+      const propLeft = parseInt(this.leftPerson[prop]) || 0;
+      const propRight = parseInt(this.rightPerson[prop]) || 0;
+
+      if (propLeft > propRight) {
+        this.leftPerson.winner = true;
+      }
+
+      if (propRight > propLeft) {
+        this.rightPerson.winner = true;
+      }
     }
   },
 
   computed: {
     peoplePageCount() {
-      return Math.ceil(this.peopleCount / 10)
+      return Math.ceil(this.peopleCount / 10);
     }
   }
 };
