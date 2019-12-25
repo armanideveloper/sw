@@ -8,6 +8,18 @@
         </b-col>
       </b-row>
       <b-row v-if="this.ready">
+        <b-col />
+        <b-col>
+          <multiselect
+            v-model="rightPerson"
+            :options="people"
+            label="name"
+            @input="chooseWinner('height')"
+            @search-change="search"
+          />
+        </b-col>
+      </b-row>
+      <b-row v-if="this.ready">
         <b-col>
           <Person :person="leftPerson" :score="leftScore" />
         </b-col>
@@ -78,6 +90,9 @@ export default {
     },
 
     chooseWinner(prop) {
+      this.leftPerson.winner = false;
+      this.rightPerson.winner = false;
+
       const propLeft = parseInt(this.leftPerson[prop]) || 0;
       const propRight = parseInt(this.rightPerson[prop]) || 0;
 
@@ -90,6 +105,10 @@ export default {
         this.rightPerson.winner = true;
         this.rightScore++;
       }
+    },
+
+    search(search) {
+      this.$swapi.getPeople({ search }, data => (this.people = data.results));
     }
   },
 
