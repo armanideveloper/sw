@@ -2,17 +2,43 @@
   <div id="app">
     <loading :active.sync="isLoading" :can-cancel="false" />
     <b-container>
-      <b-row>
-        <b-col cols="1" class="mb-4">
+      <b-row class="mb-4">
+        <b-col cols="1">
           <b-button variant="success" @click="setData">Play</b-button>
         </b-col>
       </b-row>
-      <b-row v-if="this.ready">
+      <b-row v-if="this.ready" class="mb-4">
         <b-col>
-          <Resource :person="leftResource" :score="leftScore" />
+          <Resource
+            :resource="leftResource"
+            :score="leftScore"
+            :prop="resource.prop"
+          />
         </b-col>
         <b-col>
-          <Resource :person="rightResource" :score="rightScore" />
+          <Resource
+            :resource="rightResource"
+            :score="rightScore"
+            :prop="resource.prop"
+          />
+        </b-col>
+      </b-row>
+      <b-row>
+        <b-col>
+          <b-button-group>
+            <b-button
+              :variant="resource.name === 'people' ? 'success' : ''"
+              @click="setResource('people', 'height')"
+            >
+              People
+            </b-button>
+            <b-button
+              :variant="resource.name === 'starships' ? 'success' : ''"
+              @click="setResource('starships', 'length')"
+            >
+              Ships
+            </b-button>
+          </b-button-group>
         </b-col>
       </b-row>
     </b-container>
@@ -40,37 +66,46 @@ export default {
       isLoading: false,
       ready: false,
       leftScore: 0,
-      rightScore: 0
+      rightScore: 0,
+      resource: {
+        name: "people",
+        prop: "height"
+      }
     };
   },
 
   methods: {
     setData() {
       this.isLoading = true;
-      this.$swapi.getPeople(data => {
+
+      this.swapiReq(data => {
         this.resourceCount = data.count;
 
-        const leftPromise = this.getRandomPerson();
-        const rightPromise = this.getRandomPerson();
+        const leftPromise = this.getRandomResource();
+        const rightPromise = this.getRandomResource();
 
         Promise.all([leftPromise, rightPromise])
-          .then(people => {
-            this.leftResource = people[0];
-            this.rightResource = people[1];
+          .then(results => {
+            this.leftResource = results[0];
+            this.rightResource = results[1];
+
+            this.leftResource.prop = this.resource.prop;
+            this.rightResource.prop = this.resource.prop;
+
             this.ready = true;
-            this.chooseWinner("height");
+            this.chooseWinner(this.resource.prop);
           })
           .finally(() => (this.isLoading = false));
       });
     },
 
-    getRandomPerson() {
+    getRandomResource() {
       return new Promise(resolve => {
         const page = Math.floor(Math.random() * this.resourcePageCount) + 1;
 
-        this.$swapi.getPeople({ page }, data => {
-          const people = data.results;
-          resolve(people[Math.floor(Math.random() * people.length)]);
+        this.swapiReq({ page }, data => {
+          const results = data.results;
+          resolve(results[Math.floor(Math.random() * results.length)]);
         });
       });
     },
@@ -92,11 +127,22 @@ export default {
         this.rightScore++;
       }
     },
+
+    setResource(name, prop) {
+      this.resource.name = name;
+      this.resource.prop = prop;
+    }
   },
 
   computed: {
     resourcePageCount() {
       return Math.ceil(this.resourceCount / 10);
+    },
+
+    swapiReq() {
+      const name = this.resource.name;
+
+      return this.$swapi["get" + name.charAt(0).toUpperCase() + name.slice(1)];
     }
   }
 };
