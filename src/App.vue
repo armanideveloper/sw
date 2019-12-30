@@ -28,13 +28,13 @@
           <b-button-group>
             <b-button
               :variant="resource.name === 'people' ? 'success' : ''"
-              @click="setResource('people', 'height')"
+              @click="setResource('people', 'mass')"
             >
               People
             </b-button>
             <b-button
               :variant="resource.name === 'starships' ? 'success' : ''"
-              @click="setResource('starships', 'length')"
+              @click="setResource('starships', 'crew')"
             >
               Ships
             </b-button>
@@ -69,7 +69,7 @@ export default {
       rightScore: 0,
       resource: {
         name: "people",
-        prop: "height"
+        prop: "mass"
       }
     };
   },
