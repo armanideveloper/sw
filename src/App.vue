@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <loading :active.sync="isLoading" :can-cancel="true" />
+    <loading :active.sync="isLoading" :can-cancel="false" />
     <b-container>
       <b-row>
         <b-col cols="1" class="mb-4">
@@ -8,23 +8,11 @@
         </b-col>
       </b-row>
       <b-row v-if="this.ready">
-        <b-col />
         <b-col>
-          <multiselect
-            v-model="rightPerson"
-            :options="people"
-            label="name"
-            @input="chooseWinner('height')"
-            @search-change="search"
-          />
-        </b-col>
-      </b-row>
-      <b-row v-if="this.ready">
-        <b-col>
-          <Person :person="leftPerson" :score="leftScore" />
+          <Resource :person="leftResource" :score="leftScore" />
         </b-col>
         <b-col>
-          <Person :person="rightPerson" :score="rightScore" />
+          <Resource :person="rightResource" :score="rightScore" />
         </b-col>
       </b-row>
     </b-container>
@@ -32,7 +20,7 @@
 </template>
 
 <script>
-import Person from "./components/Person.vue";
+import Resource from "./components/Resource.vue";
 import Loading from "vue-loading-overlay";
 import "vue-loading-overlay/dist/vue-loading.css";
 
@@ -40,16 +28,15 @@ export default {
   name: "app",
 
   components: {
-    Person,
+    Resource,
     Loading
   },
 
   data() {
     return {
-      peopleCount: 1,
-      people: [],
-      leftPerson: {},
-      rightPerson: {},
+      resourceCount: 1,
+      leftResource: {},
+      rightResource: {},
       isLoading: false,
       ready: false,
       leftScore: 0,
@@ -61,16 +48,15 @@ export default {
     setData() {
       this.isLoading = true;
       this.$swapi.getPeople(data => {
-        this.peopleCount = data.count;
-        this.people = data.results;
+        this.resourceCount = data.count;
 
         const leftPromise = this.getRandomPerson();
         const rightPromise = this.getRandomPerson();
 
         Promise.all([leftPromise, rightPromise])
           .then(people => {
-            this.leftPerson = people[0];
-            this.rightPerson = people[1];
+            this.leftResource = people[0];
+            this.rightResource = people[1];
             this.ready = true;
             this.chooseWinner("height");
           })
@@ -80,7 +66,7 @@ export default {
 
     getRandomPerson() {
       return new Promise(resolve => {
-        const page = Math.floor(Math.random() * this.peoplePageCount) + 1;
+        const page = Math.floor(Math.random() * this.resourcePageCount) + 1;
 
         this.$swapi.getPeople({ page }, data => {
           const people = data.results;
@@ -90,31 +76,27 @@ export default {
     },
 
     chooseWinner(prop) {
-      this.$set(this.leftPerson, "winner", false);
-      this.$set(this.rightPerson, "winner", false);
+      this.$set(this.leftResource, "winner", false);
+      this.$set(this.rightResource, "winner", false);
 
-      const propLeft = parseInt(this.leftPerson[prop]) || 0;
-      const propRight = parseInt(this.rightPerson[prop]) || 0;
+      const propLeft = parseInt(this.leftResource[prop]) || 0;
+      const propRight = parseInt(this.rightResource[prop]) || 0;
 
       if (propLeft > propRight) {
-        this.leftPerson.winner = true;
+        this.leftResource.winner = true;
         this.leftScore++;
       }
 
       if (propRight > propLeft) {
-        this.rightPerson.winner = true;
+        this.rightResource.winner = true;
         this.rightScore++;
       }
     },
-
-    search(search) {
-      this.$swapi.getPeople({ search }, data => (this.people = data.results));
-    }
   },
 
   computed: {
-    peoplePageCount() {
-      return Math.ceil(this.peopleCount / 10);
+    resourcePageCount() {
+      return Math.ceil(this.resourceCount / 10);
     }
   }
 };
